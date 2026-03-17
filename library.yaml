@@ -15,6 +15,10 @@ library:
       description: "AGENTS.md 생성 — AI 개발을 위한 비발견적 운영 지식 추출"
       source: https://github.com/juliuschun/internal-skills/blob/master/skills/agents-md/SKILL.md
 
+    - name: ascii-art
+      description: "ASCII 아트/다이어그램 생성 (CJK 더블위드 처리)"
+      source: https://github.com/juliuschun/internal-skills/blob/master/skills/ascii-art/SKILL.md
+
     - name: brainstorming
       description: "구현 전 아이디어 탐색, 요구사항 설계"
       source: https://github.com/juliuschun/internal-skills/blob/master/skills/brainstorming/SKILL.md
@@ -22,6 +26,10 @@ library:
     - name: codex
       description: "OpenAI Codex CLI 연동"
       source: https://github.com/juliuschun/internal-skills/blob/master/skills/codex/SKILL.md
+
+    - name: create-kanban-task
+      description: "칸반 보드 태스크 생성/관리"
+      source: https://github.com/juliuschun/internal-skills/blob/master/skills/create-kanban-task/SKILL.md
 
     - name: create-skill
       description: "새 Claude Code skill 생성"
@@ -106,10 +114,6 @@ library:
     - name: search
       description: "과거 대화/세션 FTS5 전문 검색"
       source: https://github.com/juliuschun/internal-skills/blob/master/skills/search/SKILL.md
-
-    - name: slide
-      description: "HTML/CSS 슬라이드 + Puppeteer PDF 렌더링"
-      source: https://github.com/juliuschun/internal-skills/blob/master/skills/slide/SKILL.md
 
     - name: stibee-formatter
       description: "마크다운 → Stibee 이메일 HTML 변환"
