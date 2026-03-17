@@ -67,6 +67,10 @@ library:
       description: "AI 텍스트 탐지 점수 낮추기 (Pangram API)"
       source: https://github.com/juliuschun/internal-skills/blob/master/skills/humanize/SKILL.md
 
+    - name: marp
+      description: "Marp 마크다운 슬라이드 + animated SVG + PDF/PPTX"
+      source: https://github.com/juliuschun/internal-skills/blob/master/skills/marp/SKILL.md
+
     - name: memory
       description: "영구 메모리 DB 검색/관리"
       source: https://github.com/juliuschun/internal-skills/blob/master/skills/memory/SKILL.md
