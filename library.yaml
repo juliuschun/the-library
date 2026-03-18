@@ -119,6 +119,10 @@ library:
       description: "과거 대화/세션 FTS5 전문 검색"
       source: https://github.com/juliuschun/internal-skills/blob/master/skills/search/SKILL.md
 
+    - name: svg-animation
+      description: "Animated SVG 인포그래픽 생성 (시네마틱 다크 테마)"
+      source: https://github.com/juliuschun/internal-skills/blob/master/skills/svg-animation/SKILL.md
+
     - name: stibee-formatter
       description: "마크다운 → Stibee 이메일 HTML 변환"
       source: https://github.com/juliuschun/internal-skills/blob/master/skills/stibee-formatter/SKILL.md
