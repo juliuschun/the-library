@@ -43,6 +43,10 @@ library:
       description: "디자인 스페이스 탐색, 경쟁 제안 생성"
       source: https://github.com/juliuschun/internal-skills/blob/master/skills/design-explore/SKILL.md
 
+    - name: design-md
+      description: "DESIGN.md 디자인 시스템 문서 생성/적용 (55개 브랜드 프리셋 + URL 분석 생성)"
+      source: ~/.claude/skills/design-md/SKILL.md
+
     - name: doc-seed
       description: "프로젝트 문서화 skill 생성"
       source: https://github.com/juliuschun/internal-skills/blob/master/skills/doc-seed/SKILL.md
