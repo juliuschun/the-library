@@ -419,5 +419,33 @@ else
   warn "Failed to restart tower-prod — skill DB may still contain legacy rows until next restart"
 fi
 
+# ─── Neko health check (managed profiles expect remote browser) ───
+# If the profile includes `browser-live`, the VM needs the Neko infra running
+# on :32800. Warn (don't fail) when it's missing so the operator can run
+# tower/scripts/azure/setup-neko.sh.
+if echo "$SKILLS" | tr ' ' '\n' | grep -qx "browser-live"; then
+  echo ""
+  echo -e "${CYAN}═══ Neko infra health ═══${NC}"
+  NEKO_STATUS=$(ssh -o ConnectTimeout=5 "$SSH_TARGET" \
+    'docker ps --filter name=neko-browser --format "{{.Status}}" 2>/dev/null || echo "docker-missing"')
+  if [[ "$NEKO_STATUS" == "docker-missing" ]]; then
+    warn "browser-live skill deployed but Docker is missing on the VM."
+    warn "Run: bash tower/scripts/azure/setup-neko.sh --domain <fqdn>"
+  elif [[ -z "$NEKO_STATUS" ]]; then
+    warn "browser-live skill deployed but neko-browser container is not running."
+    warn "Run on VM: bash ~/.claude/scripts/neko-start.sh"
+    warn "Or re-provision: bash tower/scripts/azure/setup-neko.sh --domain <fqdn>"
+  else
+    echo -e "  ${GREEN}✓${NC} neko-browser: $NEKO_STATUS"
+    NEKO_HTTP=$(ssh -o ConnectTimeout=5 "$SSH_TARGET" \
+      'curl -s -o /dev/null -w "%{http_code}" http://localhost:32800/ 2>/dev/null || echo "000"')
+    if [[ "$NEKO_HTTP" == "200" ]]; then
+      echo -e "  ${GREEN}✓${NC} Neko HTTP /: $NEKO_HTTP"
+    else
+      warn "Neko container up but HTTP /:32800 returned $NEKO_HTTP (may still be warming)"
+    fi
+  fi
+fi
+
 echo ""
 echo -e "${GREEN}Done!${NC} Customer can now use deployed skills on their Tower instance."
