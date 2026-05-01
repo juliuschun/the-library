@@ -1,10 +1,14 @@
 ---
 name: library
-description: Private skill distribution system. Use when the user wants to install, use, add, push, remove, sync, list, or search for skills, agents, or prompts from their private library catalog. Triggers on /library commands or mentions of library, skill distribution, or agentic management.
-argument-hint: [command or prompt] [name or details]
+description: |
+  Mandatory entry point for the entire skill lifecycle — create, register, deploy, push, and manage private skills/agents/prompts. Use whenever the user wants to make a new skill, register an existing one, deploy skills to managed customer VMs, push skills back to GitHub, or browse the catalog. Triggers on `/library`, "스킬 만들어", "create skill", "new skill", "스킬 등록", "스킬 배포", "register skill", "publish skill", "스킬 카탈로그", "스킬 마켓".
+  IMPORTANT: New skill creation MUST go through `/library create` — `skill-architect` is a sub-tool called internally and should not be invoked directly for net-new skills.
+argument-hint: "[create|add|use|publish|push|remove|list|sync|search] [name|details]"
 ---
 
-# The Library
+# The Library — Mandatory Entry Point for Skill Lifecycle
+
+This skill is **the single entry point** for everything related to skills/agents/prompts on this server. Per the decision in `~/workspace/decisions/2026-05-01-skill-lifecycle-mandatory-entry-point.md`, every new skill creation, catalog registration, and customer-VM deployment must flow through `/library` commands. Direct invocation of `skill-architect` is reserved for validation/audit/distill on already-installed skills.
 
 A meta-skill for private-first distribution of agentics (skills, agents, and prompts) across agents, devices, and teams.
 
@@ -24,33 +28,92 @@ The Library is a catalog of references to your agentics. The `library.yaml` file
 
 ## Commands
 
-| Command                     | Purpose                                  |
-| --------------------------- | ---------------------------------------- |
-| `/library install`          | First-time setup: fork, clone, configure |
-| `/library add <details>`    | Register a new entry in the catalog      |
-| `/library use <name>`       | Pull from source (install or refresh)    |
-| `/library push <name>`      | Push local changes back to source        |
-| `/library remove <name>`    | Remove from catalog and optionally local |
-| `/library list`             | Show full catalog with install status    |
-| `/library sync`             | Re-pull all installed items from source   |
-| `/library search <keyword>` | Find entries by keyword                  |
+스킬 라이프사이클 (생성 → 운영 → 정제 → 배포) 모두 이 한 스킬 안에서 명령으로 노출됨.
+
+### Lifecycle (저자 + 정제)
+
+| Command                                  | Purpose                                                                |
+| ---------------------------------------- | ---------------------------------------------------------------------- |
+| `/library create <name> [type] [tags]`   | **Create a new skill end-to-end** (5-phase: Genesis → Scaffold → Smoke test → Validate → Register) |
+| `/library validate <path> [--fix]`       | Validate a single existing skill (frontmatter + structure + best practice) |
+| `/library audit [path]`                  | Validate all SKILL.md in a directory (default `~/.claude/skills/`)     |
+| `/library distill <path> [--apply]`      | Semantic analysis + compress bloated SKILL.md, move detail to reference |
+| `/library refine <name>`                 | Iterative improvement after real use (4-phase: Observe → Diagnose → Apply → Verify) |
+
+### Distribution (catalog + customer VMs)
+
+| Command                                  | Purpose                                                                |
+| ---------------------------------------- | ---------------------------------------------------------------------- |
+| `/library publish <profile\|customer>`   | **(operator host only)** Deploy registered skills to managed customer VMs |
+| `/library install`                       | First-time setup on this device: fork, clone, configure                |
+| `/library add <details>`                 | Register an existing skill (already on disk) into the catalog          |
+| `/library use <name>`                    | Pull from external source (install or refresh)                         |
+| `/library push <name>`                   | Push local changes back to source (GitHub backup)                      |
+| `/library remove <name>`                 | Remove from catalog and optionally local                               |
+| `/library list`                          | Show full catalog with install status                                  |
+| `/library sync`                          | Re-pull all installed items from source                                |
+| `/library search <keyword>`              | Find entries by keyword                                                |
+
+### Host context (어디서 실행 중인지가 중요)
+
+| 호스트 | library 의 역할 |
+|---|---|
+| **Operator host (본 서버, full 프로필)** | 모든 명령 사용 가능. customers 레지스트리·publish 도 여기서만 작동. 우리가 만든 스킬은 본 서버 → publish 로 customer VM 으로 전파. |
+| **Managed customer VM** (e.g. okusystem) | lifecycle 명령 (`create / validate / audit / distill / refine`) + 카탈로그 관리 (`add / list / search / remove`) + 외부 pull (`use / push`) 사용 가능. **`publish` 비활성** (customers 정보 없음). 여기서 만든 스킬은 **그 VM 에만** 살고, 우리 publish 가 덮어쓰지 않음 (이름 충돌 없는 한). |
+| **Standalone customer VM** | managed 와 동일하되, 우리가 publish 안 함. 자체 운영. |
+
+자세한 정책: `cookbook/publish.md` 의 "Host context" 섹션, `cookbook/create.md` 의 "Customer host naming" 섹션.
 
 ## Cookbook
 
 Each command has a detailed step-by-step guide. **Read the relevant cookbook file before executing a command.**
 
-| Command | Cookbook                                 | Use When                                                    |
-| ------- | --------------------------------------- | ----------------------------------------------------------- |
-| install | [cookbook/install.md](cookbook/install.md) | First-time setup on a new device                            |
-| add     | [cookbook/add.md](cookbook/add.md)         | User wants to register a new skill/agent/prompt in catalog  |
-| use     | [cookbook/use.md](cookbook/use.md)         | User wants to pull or refresh a skill from the catalog      |
-| push    | [cookbook/push.md](cookbook/push.md)       | User improved a skill locally and wants to update the source |
-| remove  | [cookbook/remove.md](cookbook/remove.md)   | User wants to remove an entry from the catalog               |
-| list    | [cookbook/list.md](cookbook/list.md)       | User wants to see what's available and what's installed      |
-| sync    | [cookbook/sync.md](cookbook/sync.md)       | User wants to refresh all installed items at once            |
-| search  | [cookbook/search.md](cookbook/search.md)   | User is looking for a skill but doesn't know the exact name |
+| Command  | Cookbook                                       | Use When                                                                                        |
+| -------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| create   | [cookbook/create.md](cookbook/create.md)       | User wants a NEW skill (5-phase JTBD-driven workflow). Default for "스킬 만들어".                |
+| validate | [cookbook/validate.md](cookbook/validate.md)   | Single-skill validation (called by create Phase 4, or directly on existing skills)              |
+| audit    | [cookbook/audit.md](cookbook/audit.md)         | Directory-wide validation + catalog mismatch check                                              |
+| distill  | [cookbook/distill.md](cookbook/distill.md)     | Skill bloat / trigger drift — analyze and compress                                              |
+| refine   | [cookbook/refine.md](cookbook/refine.md)       | After 1-2 weeks of real use — iterative improvement                                             |
+| publish  | [cookbook/publish.md](cookbook/publish.md)     | User wants registered skills pushed out to managed customer VMs                                  |
+| install  | [cookbook/install.md](cookbook/install.md)     | First-time setup on a new device                                                                 |
+| add      | [cookbook/add.md](cookbook/add.md)             | User wants to register a skill that already exists on disk (no scaffold needed)                  |
+| use      | [cookbook/use.md](cookbook/use.md)             | User wants to pull or refresh a skill from the catalog                                           |
+| push     | [cookbook/push.md](cookbook/push.md)           | User improved a skill locally and wants to update the upstream GitHub source                     |
+| remove   | [cookbook/remove.md](cookbook/remove.md)       | User wants to remove an entry from the catalog                                                   |
+| list     | [cookbook/list.md](cookbook/list.md)           | User wants to see what's available and what's installed                                          |
+| sync     | [cookbook/sync.md](cookbook/sync.md)           | User wants to refresh all installed items at once                                                |
+| search   | [cookbook/search.md](cookbook/search.md)       | User is looking for a skill but doesn't know the exact name                                      |
 
 **When a user invokes a `/library` command, read the matching cookbook file first, then execute the steps.**
+
+## Reference (skill spec + validation)
+
+스킬 자체의 형식·검증·테스트 reference. `cookbook/create.md` 와 `cookbook/validate.md` 가 이 파일들을 참조함.
+
+| File | Content |
+|---|---|
+| `reference/skill-spec.md` | Frontmatter spec, structure conventions, allowed-tools, MCP integration |
+| `reference/skill-templates.md` | Type별 (reference / task / file-writing / multi-agent) 본문 템플릿 |
+| `reference/skill-validation.md` | Validation 체크리스트 (ERROR / WARN / INFO 분류) |
+| `reference/skill-testing.md` | TDD-style trigger probes + JTBD test pack 패턴 |
+| `reference/skill-classification.md` | 스킬 type 분류 가이드 (어떤 type 으로 만들지) |
+
+## Lifecycle Flow (mandatory entry point)
+
+```
+"스킬 만들어"      →  /library create   (5-phase: JTBD → scaffold → smoke test → validate → register)
+                                       └─ ask: "managed VMs 에 배포?" → /library publish managed
+"이미 만든 스킬 등록"  →  /library add
+"이상해, 고치자"    →  /library refine    (4-phase: observe → diagnose → apply → verify)
+"본문 너무 두꺼움"  →  /library distill   (analyze, compress to reference)
+"전체 점검"        →  /library audit
+"검증 한 번"       →  /library validate
+"고객 VM 배포"     →  /library publish <profile|customer>
+"GitHub 백업"     →  /library push <name>
+```
+
+이 라이프사이클 전체가 **`/library` 한 스킬 안에서 끝남**. 별도 sub-skill 없음. 결정·이유: `~/workspace/decisions/2026-05-01-skill-lifecycle-mandatory-entry-point.md`.
 
 ## Source Format
 
