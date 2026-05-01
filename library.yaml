@@ -307,6 +307,12 @@ library:
       배포
     tags:
     - tower-ops
+  - name: skill-architect
+    version: 1.0.0
+    description: 스킬 라이프사이클 — 만들기·검증·감사·정제·개선 (5-phase create + 4-phase refine). authoring
+      entry point. 카탈로그 등재·배포는 /library.
+    tags:
+    - business
   - name: tower-upgrade
     version: 1.0.0
     description: Tower 템플릿 업그레이드 — workspace에서 검증된 개선사항을 Tower 기본 템플릿에 반영
@@ -314,11 +320,10 @@ library:
     - tower-ops
   - name: library
     version: 1.0.0
-    description: 스킬 라이프사이클 단일 진입점 — 생성/검증/감사/정제/배포. managed VM 에서는 publish/install
-      이외 명령 사용 (자체 스킬 만들기·관리). 본 서버에서만 customer 배포 명령 작동.
+    description: 스킬 카탈로그 + 배포 — library.yaml 등록·외부 source pull·고객 VM publish (operator
+      host 만). authoring 은 /skill-architect.
     tags:
     - tower-ops
-    - business
   - name: tower-guide
     version: 1.0.0
     description: Tower 아키텍처 가이드 — 컨텍스트 레이어, 업데이트 맵, 포맷 스펙
