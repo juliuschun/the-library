@@ -25,9 +25,7 @@
 
 ## When this runs
 
-## When this runs
-
-- `/library create` 흐름의 마지막 단계로 사용자가 "managed VM 에 배포" 선택했을 때
+- `/skill-architect create` 흐름의 마지막 단계로 사용자가 "managed VM 에 배포" 선택했을 때
 - `/library publish <profile>` 또는 `/library publish <customer>` 명시 호출
 - 자연어 트리거: "고객 VM 에 스킬 배포", "okusystem 에 새 스킬 보내기", "publish skill"
 
@@ -113,6 +111,37 @@ bash ~/.claude/skills/library/deploy-profile.sh --diff <customer>
 
 → "missing / outdated / up-to-date / customer-custom" 카테고리로 결과 보고. missing 이 있으면 경고.
 
+### 4.5 Secrets drift 검사 (★ 자주 누락)
+
+배포된 스킬이 외부 API 키 의존성 있을 수 있음 (예: `OPENAI_API_KEY`). `library.yaml customers.<name>.secrets:` 의 declarative 선언과 customer VM 의 실제 `~/claude-desk/.env` 가 일치하는지 검사:
+
+```bash
+# 선언된 키 이름들
+declared=$(yq -r ".customers.$CUSTOMER.secrets[]" ~/.claude/skills/library/library.yaml)
+
+# customer VM 의 실제 키 (이름만, 값 redact)
+actual=$(ssh "$SSH_TARGET" "grep -oE '^[A-Z_]+=' ~/claude-desk/.env 2>/dev/null | sed 's/=$//'")
+
+# missing = 선언했는데 .env 에 없음
+missing=$(comm -23 <(echo "$declared" | sort) <(echo "$actual" | sort))
+
+if [[ -n "$missing" ]]; then
+  warn "Missing secrets on $CUSTOMER:"
+  echo "$missing" | sed 's/^/  - /'
+  echo "→ Run: /fleet secrets $CUSTOMER 또는 set-secret.sh 스크립트로 배포"
+fi
+```
+
+**선언 vs 실제 mismatch 패턴**:
+- ⚠️ 선언만 있고 실제 .env 에 없음 → 다음 첫 호출에서 fail. **배포 전에 fix 필수**.
+- ℹ️ .env 에는 있는데 선언 없음 → declarative source 갱신 권장 (운영자가 수동 추가했거나 옛 잔존)
+- ✅ 둘 다 일치 → 정상
+
+이 검사는 단기 follow-up 으로 `deploy-profile.sh --diff <customer>` 에 통합 예정. 현재는 위 snippet 으로 수동 검사.
+
+근거: `~/workspace/decisions/2026-05-01-skill-lifecycle-mandatory-entry-point.md` (갱신 #5 — Phase 4.5)
++ `~/workspace/decisions/2026-05-01-ppt-gen-openai-integration.md` (`set-secret.sh` 신설 절차)
+
 ### 5. 보고
 
 사용자에게 요약:
@@ -142,7 +171,7 @@ AI:    단일 customer → 한 번 실행 → diff → 보고
 ```
 
 ```
-사용자: "/library create 끝나고 곧장 publish"
+사용자: "/skill-architect create 끝나고 곧장 publish"
 AI:    create cookbook 의 step 6 에서 사용자가 "managed 배포" 선택
        → 이 cookbook step 1 부터 자동 실행
 ```
