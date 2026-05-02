@@ -296,14 +296,26 @@ for skill in $SKILL_NAMES; do
   fi
 
   echo -ne "  Deploying ${CYAN}$skill${NC}..."
-  rsync -az --delete "$SRC/" "$SSH_TARGET:~/.claude/skills/$skill/" 2>/dev/null
-  if [[ $? -eq 0 ]]; then
+  RSYNC_ERR=$(mktemp)
+  # NOTE: rsync stderr is captured (not silenced) so that silent failures
+  # — exit 0 with no actual transfer, or non-zero with hidden cause — can
+  # be diagnosed. Use `--itemize-changes` (-i) when VERBOSE=1 for forensic
+  # detail on which files transferred.
+  RSYNC_FLAGS="-az --delete"
+  [[ "${VERBOSE:-0}" == "1" ]] && RSYNC_FLAGS="$RSYNC_FLAGS --itemize-changes"
+  if rsync $RSYNC_FLAGS "$SRC/" "$SSH_TARGET:~/.claude/skills/$skill/" 2>"$RSYNC_ERR"; then
     echo -e " ${GREEN}✓${NC}"
+    [[ "${VERBOSE:-0}" == "1" ]] && [[ -s "$RSYNC_ERR" ]] && cat "$RSYNC_ERR" >&2
     ((DEPLOYED++)) || true
   else
     echo -e " ${RED}✗${NC}"
+    if [[ -s "$RSYNC_ERR" ]]; then
+      echo "    rsync error (skill=$skill):" >&2
+      sed 's/^/      /' "$RSYNC_ERR" >&2
+    fi
     ((FAILED++)) || true
   fi
+  rm -f "$RSYNC_ERR"
 done
 
 echo ""
@@ -314,13 +326,17 @@ info "Deployed: $DEPLOYED / $SKILL_COUNT skills"
 # This file marks which skills are managed by us (vs customer-created)
 MANIFEST_JSON=$(parse_yaml "$YAML_FILE" manifest "$TAGS")
 echo -ne "  Deploying managed manifest..."
-echo "$MANIFEST_JSON" | ssh "$SSH_TARGET" 'cat > ~/.claude/skills/.managed-manifest.json'
-if [[ $? -eq 0 ]]; then
+# Note: `if cmd; then` keeps set -e happy (vs `cmd; if [[ $? -eq 0 ]]` which
+# under set -e would exit before the if). Stderr is captured for diagnostics.
+MANIFEST_ERR=$(mktemp)
+if echo "$MANIFEST_JSON" | ssh "$SSH_TARGET" 'cat > ~/.claude/skills/.managed-manifest.json' 2>"$MANIFEST_ERR"; then
   echo -e " ${GREEN}✓${NC}"
 else
   echo -e " ${RED}✗${NC}"
+  [[ -s "$MANIFEST_ERR" ]] && sed 's/^/    /' "$MANIFEST_ERR" >&2
   warn "Manifest deployment failed"
 fi
+rm -f "$MANIFEST_ERR"
 
 # ─── Deploy scoped library.yaml ───
 # Tower (post-2026-04-17 skill-db-simplification) reads library.yaml +
@@ -361,13 +377,15 @@ if [[ -d "$GUIDE_SRC" ]]; then
   ssh "$SSH_TARGET" 'mkdir -p ~/workspace/guide'
 
   echo -ne "  Deploying guide files..."
-  rsync -az "$GUIDE_SRC/" "$SSH_TARGET:~/workspace/guide/" 2>/dev/null
-  if [[ $? -eq 0 ]]; then
+  GUIDE_ERR=$(mktemp)
+  if rsync -az "$GUIDE_SRC/" "$SSH_TARGET:~/workspace/guide/" 2>"$GUIDE_ERR"; then
     echo -e " ${GREEN}✓${NC}"
   else
     echo -e " ${RED}✗${NC}"
+    [[ -s "$GUIDE_ERR" ]] && sed 's/^/    /' "$GUIDE_ERR" >&2
     warn "Guide deployment failed (non-fatal)"
   fi
+  rm -f "$GUIDE_ERR"
 
   # ─── Fix {{TEAM_NAME}} placeholder if team_name is set ───
   if [[ -n "${TEAM_NAME:-}" ]]; then
@@ -471,7 +489,7 @@ fi
 # If the profile includes `browser-live`, the VM needs the Neko infra running
 # on :32800. Warn (don't fail) when it's missing so the operator can run
 # tower/scripts/azure/setup-neko.sh.
-if echo "$SKILLS" | tr ' ' '\n' | grep -qx "browser-live"; then
+if echo "$SKILL_NAMES" | tr ' ' '\n' | grep -qx "browser-live"; then
   echo ""
   echo -e "${CYAN}═══ Neko infra health ═══${NC}"
   NEKO_STATUS=$(ssh -o ConnectTimeout=5 "$SSH_TARGET" \
