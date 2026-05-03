@@ -74,12 +74,23 @@ customers:
       backup_policy: DefaultPolicy
       backup_enrolled: true
       backup_layer1_cron: true
-    # 형제 sandbox VM (D12) — 미생성. Phase 5 follow-up 으로 신설 예정.
+    # 형제 sandbox VM (D12) — 2026-05-04 신설 ✅
     sibling_execution:
-      status: pending             # ❌ 아직 신설 안 됨
-      planned_vm_name: execution-okusystem-vm
-      planned_resource_group: tower_execution
-      planned_size: Standard_B1ms
+      vm_name: execution-okusystem-vm
+      resource_group: tower_execution
+      public_ip: 20.196.213.144
+      private_ip: 10.0.0.6
+      ssh_alias: exec-okusystem  # okusystem 본체의 ~/.ssh/config 에 등록됨
+      ssh_user: toweradmin
+      size: Standard_B1ms
+      created_at: '2026-05-04'
+      status: running
+      nsg_source_ip: 20.41.101.188/32   # okusystem 본체 IP 만 허용
+      note: |-
+        okusystem 본체 .env 에 ENABLE_SANDBOX=true + EXECUTION_VM_HOST=exec-okusystem
+        활성화됨. [sandbox] enabled 로그 검증됨. 단 코드 gate (claude-engine.ts 의
+        towerRole === 'full' 조건) 가 아직 managed 차단 — Phase 2a 의 작업 잔여.
+        활성 후엔 AI가 도구 mount 받음.
   demo-tower:
     profile: managed
     ssh: toweradmin@20.200.217.16
