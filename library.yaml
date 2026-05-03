@@ -44,6 +44,18 @@ customers:
     skills_dir: ~/.claude/skills/
     current_version: 1.0.0
     version_last_checked: '2026-04-22T06:29:28Z'
+    # 형제 sandbox VM (D12, 2026-05-02 의무화).
+    # workspace/decisions/2026-05-02-execution-sandbox-d12-sibling-sandbox-mandatory.md
+    sibling_execution:
+      vm_name: execution-tower-vm
+      resource_group: tower_execution
+      public_ip: 20.194.63.1
+      private_ip: 10.0.0.4
+      ssh_alias: exec-tower      # ~/.ssh/config 에 정의된 alias
+      ssh_user: toweradmin
+      size: Standard_B1ms
+      created_at: '2026-04-26'
+      status: running             # 운영 중 ✅
   okusystem:
     profile: managed
     ssh: toweradmin@20.41.101.188
@@ -52,6 +64,9 @@ customers:
     skills_dir: ~/.claude/skills/
     current_version: 1.0.0
     version_last_checked: '2026-04-22T06:29:28Z'
+    secrets:           # Names only — values live in customer VM's ~/claude-desk/.env
+    - OPENAI_API_KEY # gpt-image-2, ppt-gen default provider
+    - GEMINI_API_KEY # legacy ppt-gen + image edit fallback
     azure:
       resource_group: tower_customers
       vm_name: okusystem
@@ -59,6 +74,12 @@ customers:
       backup_policy: DefaultPolicy
       backup_enrolled: true
       backup_layer1_cron: true
+    # 형제 sandbox VM (D12) — 미생성. Phase 5 follow-up 으로 신설 예정.
+    sibling_execution:
+      status: pending             # ❌ 아직 신설 안 됨
+      planned_vm_name: execution-okusystem-vm
+      planned_resource_group: tower_execution
+      planned_size: Standard_B1ms
   demo-tower:
     profile: managed
     ssh: toweradmin@20.200.217.16
@@ -67,6 +88,9 @@ customers:
     skills_dir: ~/.claude/skills/
     current_version: 1.0.0
     version_last_checked: '2026-04-22T06:29:28Z'
+    secrets:
+    - OPENAI_API_KEY
+    - GEMINI_API_KEY
     azure:
       resource_group: tower_customers
       vm_name: demo-tower
@@ -74,181 +98,238 @@ customers:
       backup_policy: DefaultPolicy
       backup_enrolled: true
       backup_layer1_cron: false
+    # 형제 sandbox VM (D12) — 이미 신설됨 ✅
+    sibling_execution:
+      vm_name: execution-demo-tower-vm
+      resource_group: tower_execution
+      public_ip: 20.200.220.217
+      private_ip: 10.0.0.5
+      ssh_alias: null               # demo-tower 본체에 alias 추가 필요
+      ssh_user: toweradmin
+      size: Standard_B1ms
+      created_at: '2026-04-30 (auto-detected, manual creation date approximate)'
+      status: running
+      note: |-
+        demo-tower 의 .env 에 EXECUTION_VM_HOST 활성 + ssh config 추가 작업 필요.
+        Q15 (fleet sandbox 통합) 완성 시 자동화 예정.
 library:
   skills:
   - name: ideate
+    tier: team
     version: 1.0.0
     description: 아이디어 발산 + 요구사항 구체화 (무엇을 만들지 정하기)
     tags:
     - core
   - name: research
+    tier: team
     version: 1.0.0
     description: Claude/Codex/Gemini 병렬 리서치 + 종합
     tags:
     - core
   - name: search
+    tier: team
     version: 1.0.0
     description: 예전 대화 찾기 — 과거 세션/대화 전문 검색
     tags:
     - core
   - name: memory
+    tier: team
     version: 1.0.0
     description: 기억 검색 — '저번에 말한 거', '기억나?' 등 영구 메모리 조회/관리
     tags:
     - core
   - name: ready
+    tier: team
     version: 1.7.0
     description: 세션 시작시 컨텍스트 복구
     tags:
     - core
   - name: plan-refine
+    tier: team
     version: 1.0.0
     description: 계획 검토 — 기존 계획을 도메인 방법론으로 리뷰하고 개선점 도출
     tags:
     - core
   - name: writing-plans
+    tier: team
     version: 1.0.0
     description: 구현 계획 작성 — 스펙/요구사항을 단계별 태스크로 분해 (TDD, bite-sized)
     tags:
     - core
   - name: executing-plans
+    tier: team
     version: 1.0.0
     description: 계획 실행 — 작성된 구현 계획을 배치 단위로 실행하고 중간 리뷰
     tags:
     - core
   - name: best-of-n
+    tier: team
     version: 1.0.0
     description: N개 경쟁 출력 생성 → 자체 리뷰 → 최선 선택
     tags:
     - core
   - name: design-explore
+    tier: team
     version: 1.0.0
     description: 디자인 트레이드오프 분석 + 경쟁 대안 생성 (구현 아닌 설계 탐색)
     tags:
     - core
   - name: ascii-art
+    tier: team
     version: 1.0.0
     description: ASCII 아트/다이어그램 생성 (CJK 더블위드 처리)
     tags:
     - core
   - name: prompt-architect
+    tier: team
     version: 1.0.0
     description: 프롬프트 개선 — AI 프롬프트 진단, 리라이트, 모델별 최적화
     tags:
     - core
   - name: offer-plan
+    tier: team
     version: 1.0.0
     description: B2B 견적서 생성 (JSON → Excel + PDF)
     tags:
     - business
   - name: cta
+    tier: team
     version: 1.0.0
     description: 전문가 인터뷰 분석 — 도메인 전문가의 암묵지/노하우를 체계적으로 추출 (CTA)
     tags:
     - business
   - name: humanize
+    tier: team
     version: 1.0.0
     description: 영문 AI 텍스트 → 사람 톤 리라이트 (Pangram API)
     tags:
     - business
   - name: naver-search
+    tier: team
     version: 1.0.0
     description: 네이버 뉴스/블로그/웹 검색 (OpenAPI)
     tags:
     - business
   - name: send-sms
+    tier: team
     version: 1.0.0
     description: 알리고 SMS/LMS 발송 (템플릿 변수, 배치, Notion 선택)
     tags:
     - business
   - name: tiro
+    tier: team
     version: 1.0.0
     description: Tiro 회의 녹음 API (전사본/요약 다운로드)
     tags:
     - business
   - name: gws
+    tier: team
     version: 1.0.0
     description: Google Workspace CLI — Calendar, Drive, Sheets, Docs, Tasks, Gmail
       통합
     tags:
-    - internal
+    - business
   - name: text2sql
+    tier: team
     version: 1.0.0
     description: 한국어 자연어 → SQL 변환 + DB 직접 실행
     tags:
     - business
   - name: kanban
+    tier: team
     version: 1.0.0
     description: 태스크 관리 — 칸반 보드에 할 일 추가, 상태 변경, 목록 조회
     tags:
     - business
   - name: mermaid-pdf
+    tier: team
     version: 1.0.0
     description: Mermaid 다이어그램 포함 마크다운 → PDF 변환
     tags:
     - docs
   - name: naver-formatter
+    tier: team
     version: 1.0.0
     description: 마크다운 → 네이버 블로그 복붙용 HTML 변환
     tags:
     - docs
   - name: stibee-formatter
+    tier: team
     version: 1.0.0
     description: 마크다운 → Stibee 이메일 HTML 변환
     tags:
     - docs
   - name: svg
+    tier: team
     version: 1.0.0
     description: SVG 인포그래픽 — 애니메이션 SVG 다이어그램/인포그래픽 생성 (다크 시네마틱 스타일)
     tags:
     - docs
   - name: doc-seed
+    tier: team
     version: 1.0.0
     description: 프로젝트 문서 초안 — 새 프로젝트에 AGENTS.md, progress.md 등 문서 구조 자동 생성
     tags:
     - docs
   - name: agents-md
+    tier: team
     version: 1.0.0
     description: AGENTS.md 생성/진화 — 프로젝트 운영 지식을 자동 추출해서 AGENTS.md 작성 또는 갱신
     tags:
     - docs
+  - name: soul
+    tier: team
+    version: 1.0.0
+    description: SOUL.md 정체성 인터뷰 — 누구·왜·가치·경계 5질문 채움. brownfield 안전 (기존 progress·decisions·memory
+      흡수 후 사용자 컨펌만 기록). /soul, /soul fill, /soul consolidate, /soul check.
+    source: ~/.claude/skills/soul/SKILL.md
+    tags:
+    - docs
   - name: wiki-compile
+    tier: team
     version: 1.0.0
     description: 프로젝트 지식을 위키로 컴파일 (INDEX.md 자동 생성)
     tags:
     - docs
   - name: claude-md
+    tier: team
     version: 1.0.0
     description: CLAUDE.md 점검 — 기존 CLAUDE.md의 품질 감사, 중복 제거, 개선안 제시
     tags:
     - docs
   - name: ppt-gen
+    tier: team
     version: 1.0.0
     description: 프레젠테이션 생성 — 슬라이드/발표자료 제작 (AI 이미지, 마크다운, HTML 3가지 모드)
     tags:
     - presentation
   - name: pptx-edit
+    tier: team
     version: 1.0.0
     description: 기존 .pptx 파일 편집 — 텍스트/이미지/표/노트 수정, 마스터/레이아웃/테마 보존 (python-pptx)
     tags:
     - presentation
   - name: pptx-template
+    tier: team
     version: 1.0.0
     description: 브랜드 템플릿 .pptx + YAML 데이터 → placeholder 채워진 native .pptx 생성 (재현 가능한 제안서·보고서)
     tags:
     - presentation
   - name: pptx-review
+    tier: team
     version: 0.1.0
     description: Vision-driven PPTX 자동 검수 — static 진단 + Claude Vision 으로 한국식 컨설팅 톤 평가 + yaml 수정 제안
     tags:
     - presentation
     - meta
   - name: web-capture
+    tier: team
     version: 1.0.0
     description: 웹 페이지 캡처 — 스크린샷, 화면 읽기, 클릭, 폼 입력 등 브라우저 자동화
     tags:
     - browser
   - name: browser-live
+    tier: team
     version: 1.0.0
     description: 실시간 원격 브라우저 — 채팅 임베드/팝업 (Neko WebRTC)
     tags:
@@ -257,108 +338,128 @@ library:
     - docker
     - neko
   - name: debug
+    tier: team
     version: 1.0.0
     description: 버그 근본 원인 추적 — 수정 전 원인부터
     tags:
     - dev
   - name: tdd
+    tier: team
     version: 1.0.0
     description: 테스트 먼저 → 실패 확인 → 구현
     tags:
     - dev
   - name: verify
+    tier: team
     version: 1.0.0
     description: 완료 전 검증 — 코드/작업을 끝내기 전에 테스트·빌드·린트 실행해서 확인
     tags:
     - dev
   - name: tech-lead
+    tier: team
     version: 1.0.0
     description: 아키텍처 의사결정 — 기술 설계 트레이드오프 분석, 전문가 수준 판단
     tags:
     - dev
   - name: code-review
+    tier: team
     version: 1.0.0
     description: 코드 리뷰 요청 + 피드백 수신 (검증 우선, 아첨 금지)
     tags:
     - dev
   - name: finish-branch
+    tier: team
     version: 1.0.0
     description: 개발 브랜치 완료 → merge/PR/cleanup
     tags:
     - dev
   - name: parallel-dev
+    tier: team
     version: 1.0.0
     description: 병렬 개발 — 독립된 태스크들을 서브에이전트로 동시 실행
     tags:
     - dev
   - name: frontend-design
+    tier: team
     version: 1.0.0
     description: 프로덕션급 프론트엔드 UI 생성 — 독창적 디자인 + 코드 (50 스타일, 97 팔레트 DB 내장)
     tags:
     - dev
   - name: fleet
+    tier: tower-admin
     version: 1.0.0
     description: 고객 Tower VM 중앙 관리 (상태, 점검, 배포, 원격 세션)
     tags:
     - tower-ops
   - name: deploy
+    tier: tower-admin
     version: 1.0.0
     description: 사이트/앱 배포 — 만든 코드를 Cloudflare Pages(정적) 또는 Azure Container Apps(동적)에
       배포
     tags:
     - tower-ops
   - name: skill-architect
+    tier: tower-admin
     version: 1.0.0
     description: 스킬 라이프사이클 — 만들기·검증·감사·정제·개선 (5-phase create + 4-phase refine). authoring
       entry point. 카탈로그 등재·배포는 /library.
     tags:
-    - business
+    - meta
   - name: tower-upgrade
+    tier: tower-admin
     version: 1.0.0
     description: Tower 템플릿 업그레이드 — workspace에서 검증된 개선사항을 Tower 기본 템플릿에 반영
     tags:
     - tower-ops
   - name: library
+    tier: tower-admin
     version: 1.0.0
     description: 스킬 카탈로그 + 배포 — library.yaml 등록·외부 source pull·고객 VM publish (operator
       host 만). authoring 은 /skill-architect.
     tags:
     - tower-ops
   - name: tower-guide
+    tier: team
     version: 1.0.0
     description: Tower 아키텍처 가이드 — 컨텍스트 레이어, 업데이트 맵, 포맷 스펙
     tags:
     - core
   - name: tower-guide-update
+    tier: tower-admin
     version: 1.0.0
     description: Tower 위키 자동 갱신 — git diff → docs/tower-guide/ 업데이트
     tags:
     - tower-ops
   - name: selfheal
+    tier: tower-admin
     version: 1.0.0
     description: 시스템 자가 진단 + 회고 + 개선 — '서버 상태', '뭐가 잘못됐나', '개선할 거 없나', '좀비 정리', '헬스체크',
       '회고'
     tags:
     - tower-ops
   - name: codex
+    tier: tower-admin
     version: 1.0.0
     description: Codex 실행 — OpenAI Codex CLI로 코드 생성/분석 태스크 실행
     tags:
     - internal
   - name: gemini
+    tier: tower-admin
     version: 1.0.0
     description: Gemini 실행 — Google Gemini CLI로 멀티모달 분석/생성 태스크 실행
     tags:
     - internal
   - name: claude-agent-sdk
+    tier: tower-admin
     version: 1.0.0
     description: Claude Agent SDK 구축 가이드 (query() 베스트 프랙티스)
     tags:
     - internal
   - name: design-md
+    tier: team
     version: 1.0.0
     description: DESIGN.md 디자인 시스템 문서 생성/적용 (55개 프리셋)
     tags:
-    - internal
+    - docs
   agents: []
   prompts: []
