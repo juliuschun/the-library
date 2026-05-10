@@ -559,5 +559,40 @@ library:
     source: ~/.claude/skills/wip/SKILL.md
     tags:
     - tower-ops
+  # ─── Moat 팀 전용 (internal 카테고리 — standalone/managed 자동 제외) ───
+  # 옵션 B 의 owner 모델로 'moat' 명시. 후속 결정에서 owner-aware 매칭으로 정리 예정.
+  - name: commit-session
+    owner: moat
+    tier: team
+    version: 1.0.0
+    description: 멀티 세션 환경에서 자기 세션이 만진 파일만 자동 git add → commit. PostToolUse hook 의 provenance.jsonl
+      을 $TOWER_SESSION_ID 로 grep. Moat 팀 본 서버의 멀티 세션 작업 흐름 도구.
+    tags:
+    - internal
+  - name: offer-A4-html
+    owner: moat
+    tier: team
+    version: 1.0.0
+    description: A4 인쇄·PDF 친화 HTML 제안서·견적서·보고서 생성. Pretendard 한국어 폰트 + 네이비/오렌지 디자인
+      시스템 + Chromium headless PDF + Tower publish (unlisted). 베이AI/한투 영업 노하우. ⚠️ Moat 팀 영업
+      자산 — 고객사 배포 금지.
+    tags:
+    - internal
+  - name: tower-offer
+    owner: moat
+    tier: team
+    version: 1.0.0
+    description: Tower 도입 제안 · 견적 편지 생성 파이프라인. 신규 고객사 영업 시 담백한 편지 톤 + 구체 견적 + 가치 내장 프레이밍
+      초안. ⚠️ Moat 팀 영업 자산 — 고객사 배포 금지.
+    tags:
+    - internal
+  - name: pm-capture
+    owner: moat
+    tier: team
+    version: 1.0.0
+    description: ⚠️ DEPRECATED 2026-05-09 — workspace/decisions/2026-05-09-pm-tabs-and-pm-capture-deprecation.md.
+      "기억해/track/나중에/TODO" 류는 (1) 사소하면 무시 (2) 의미 있으면 결정문서 직접 작성 권유. 본 스킬 호출 금지.
+    tags:
+    - internal
   agents: []
   prompts: []
