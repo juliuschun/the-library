@@ -16,13 +16,16 @@ profiles:
     - business
     - docs
   managed:
-    description: 우리가 운영하는 고객 VM — standalone + 브라우저 + 프레젠테이션
+    description: 우리가 운영하는 고객 VM — standalone + 브라우저 + 프레젠테이션 + 스킬 lifecycle
     tags:
     - core
     - business
     - docs
     - browser
     - presentation
+    - meta            # skill-architect — customer 운영자도 스킬 작성·검증
+    - tower-ops       # library — customer 운영자도 자기 VM 카탈로그 운영
+    # 결정: workspace/decisions/2026-05-19-managed-profile-skill-lifecycle-tools.md
   full:
     description: Moat AI 내부 — 전체 스킬
     tags:
@@ -360,8 +363,8 @@ library:
   - name: ppt-gen
     owner: moat
     tier: team
-    version: 1.1.0
-    description: 프레젠테이션 생성 — 슬라이드/발표자료 제작 (AI 이미지, 마크다운, HTML 3가지 모드, 마크다운 모드는 PNG 비전 검증 포함)
+    version: 1.2.0
+    description: AI 이미지·슬라이드 생성 — OpenAI gpt-image-2 (한국어 텍스트 fidelity 96-100%). 단일 이미지 (포스터·인포그래픽·캠페인·SNS·hero·블로그 썸네일) 부터 슬라이드 묶음 (PPT·발표자료·제안서) 까지 한 스킬로. 3 modes — AI 이미지·Marp·HTML.
     tags:
     - presentation
   - name: pptx-edit
@@ -459,6 +462,15 @@ library:
     description: 프로덕션급 프론트엔드 UI 생성 — 독창적 디자인 + 코드 (50 스타일, 97 팔레트 DB 내장)
     tags:
     - dev
+  - name: impeccable
+    owner: external                # Apache 2.0, pbakaus/impeccable v3.0.7 (frontend-design 진화형)
+    tier: trial                    # 1~2주 dogfood 후 우리 frontend-design 에 흡수 → 제거 예정
+    version: 3.0.7
+    description: 디자인 슈퍼셋 trial — 7개 reference (typography·color·motion·spatial·interaction·responsive·ux-writing)
+      + 23 sub-command (`/impeccable craft|shape|critique|audit|polish|harden|...`) + 27 결정론적 anti-pattern.
+      ⚠️ trial only — `/impeccable pin` 금지, customer VM 배포 금지. 흡수 트랙 → workspace/decisions/2026-05-12-impeccable-trial.md
+    tags:
+    - internal                     # standalone/managed 자동 제외 → 우리 admin 한정
   - name: fleet
     owner: moat
     tier: tower-admin
@@ -504,6 +516,17 @@ library:
     tier: team
     version: 1.0.0
     description: Tower 아키텍처 가이드 — 컨텍스트 레이어, 업데이트 맵, 포맷 스펙
+    tags:
+    - core
+  - name: tower-intro
+    owner: moat
+    tier: team
+    version: 1.1.0
+    description: Tower 에 대해 *궁금한 거 무엇이든* 풀어주는 안내·Q&A 스킬. 입문부터 깊은 질문 ("권한 어떻게 격리돼?",
+      "Sandbox 랑 본체 뭐가 달라?", "내가 X 할 수 있어?", "이거 어떻게 동작해?", "왜 이렇게 만들어졌어?") 까지. 핸드북
+      (`~/.claude/skills/upgrade-handbook/handbook.md`) 백엔드. 4 모드 (default 질문 즉답 또는 짧은 맞춤
+      소개 / tour 5-7 단계 / <topic> 토픽 즉답 / cheatsheet 한 페이지). 사용자 역할·현재 프로젝트에 맞춰 자동
+      분기. 모든 Tower 사용자 대상 — customer VM 까지 배포.
     tags:
     - core
   - name: tower-guide-update
@@ -592,6 +615,16 @@ library:
     version: 1.0.0
     description: ⚠️ DEPRECATED 2026-05-09 — workspace/decisions/2026-05-09-pm-tabs-and-pm-capture-deprecation.md.
       "기억해/track/나중에/TODO" 류는 (1) 사소하면 무시 (2) 의미 있으면 결정문서 직접 작성 권유. 본 스킬 호출 금지.
+    tags:
+    - internal
+  - name: upgrade-tower-intro
+    owner: moat
+    tier: team
+    version: 1.1.0
+    description: '/tower-intro 의 데이터·정의를 유지보수·업그레이드하는 운영자 메타-스킬. tower-intro 가 사용자 질문에
+      답할 때 참조하는 핸드북 정본 (옆 폴더 handbook.md) 의 신선도 진단·갱신·섹션 인용·발표 자료 톤별 초안 추출 4 모드.
+      핸드북이 합성물이라 원본 (결정문서/위키/카탈로그/시드) 변경 시 자동 stale 감지. 사용자 인터랙티브 안내는 `/tower-intro`
+      사용. ⚠️ Moat 팀 운영 자산 — customer VM 배포 금지.'
     tags:
     - internal
   agents: []
