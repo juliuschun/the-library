@@ -511,6 +511,25 @@ library:
       host 만). authoring 은 /skill-architect.
     tags:
     - tower-ops
+  - name: customer-voice
+    owner: moat
+    tier: tower-admin
+    version: 0.1.0
+    description: 고객 VM 대화 청취 — 고객 user 입력을 읽고 제품·운영·프롬프팅 개선 및 tower 채널 공지 초안으로 전환 (admin-only,
+      자동 전송 금지)
+    source: ~/.claude/skills/customer-voice/SKILL.md
+    tags:
+    - internal
+    risk:
+      level: high
+      can_send_external: true       # 운영자 승인 후 #tower 채널 webhook push 가능
+      can_modify_files: false
+      can_deploy: false
+      uses_secrets: true            # customer VM SSH / room webhook token
+    data_policy:
+      handles_customer_data: true   # 고객 VM user 메시지
+      stores_outputs: true          # 내부 청취 노트·개선 액션 문서
+      external_api: false
   - name: tower-guide
     owner: moat
     tier: team
