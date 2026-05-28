@@ -1,22 +1,27 @@
 ---
 name: library
 description: |
-  Skill catalog & distribution — register skills in the catalog (library.yaml), pull/push from external sources (GitHub), publish to managed customer VMs (operator host only), browse what's available. Triggers on `/library`, "스킬 등록", "스킬 카탈로그", "스킬 배포", "register skill", "publish skill", "skill catalog", "스킬 목록", "스킬 검색".
-  Companion to `/skill-architect` which handles authoring & refinement (create/validate/audit/distill/refine). When a new skill is authored via `/skill-architect create`, hand off here for `/library add` (catalog registration) and optionally `/library publish` (deploy to customer VMs, operator-host only).
-argument-hint: "[add|publish|use|push|install|sync|list|search|remove] [name|details]"
+  Moat operator-only legacy catalog tool — maintain the system library.yaml catalog and external source/GitHub backup. NOT the normal skill authoring/visibility/distribution path: authoring → skill-architect, current-VM registry/visibility/local catalog → skill-registry, customer VM registry sync → skill-registry-orchestration, Tower code deploy → fleet. Triggers on `/library`, "library.yaml", "system catalog", "external source", "GitHub backup", "legacy library", "스킬 카탈로그". Avoid for customer-facing "스킬 등록/배포" unless explicitly maintaining the Moat system catalog.
+argument-hint: "[add|use|push|install|sync|list|search|remove|publish-legacy] [name|details]"
 ---
 
-# The Library — Skill Catalog & Distribution
+# The Library — Moat System Catalog & Legacy Wrapper
 
-Catalog of skills (and agents/prompts) in `library.yaml`, distribution engine via `deploy-profile.sh`, GitHub backup/sync, customer-VM publish.
+`/library` is no longer the broad skill lifecycle entry point. It remains as a **Moat operator compatibility tool** for the system catalog (`library.yaml`) and external source backup/sync.
 
-**Companion of `/skill-architect`**:
-- Authoring + refinement → `/skill-architect`
-- Catalog + distribution → `/library` (this)
+For normal skill work, use the role split below.
+
+| Need | Canonical skill |
+|---|---|
+| Create, validate, audit, or refine a skill body | `/skill-architect` |
+| Diagnose current VM visibility/registration or promote a local/customer skill | `/skill-registry` |
+| Check/sync customer VM registries across the fleet | `/skill-registry-orchestration` |
+| Deploy Tower code / inspect customer VM health | `/fleet` |
+| Maintain Moat system `library.yaml` or external source backup | `/library` |
 
 ## How It Works
 
-`library.yaml` is a catalog of references to your skills/agents/prompts. Entries define what's *available* — not what gets installed. You pull on demand with `/library use <name>` or push out with `/library publish <profile>`.
+`library.yaml` is the Moat system catalog of references to skills/agents/prompts. Entries define what the operator catalog knows about — not what every VM should install. Customer/company-local skills should live in `local-library.yaml` via `/skill-registry`, not in this system catalog.
 
 - **`LIBRARY_REPO_URL`**: `<your forked repo url>` (set after `/library install`)
 - **`LIBRARY_YAML_PATH`**: `~/.claude/skills/library/library.yaml`
@@ -24,52 +29,47 @@ Catalog of skills (and agents/prompts) in `library.yaml`, distribution engine vi
 
 ## Commands
 
-### Catalog management (모든 호스트)
+### Moat system catalog maintenance (operator host)
 
-| Command                     | Cookbook | Purpose                                           |
-| --------------------------- | -------- | ------------------------------------------------- |
-| `/library add <details>`    | [add.md](cookbook/add.md) | 디스크에 있는 스킬을 카탈로그에 등록 (skill-architect create 의 마지막 단계) |
-| `/library remove <name>`    | [remove.md](cookbook/remove.md) | 카탈로그에서 제거 (옵션: 디스크도) |
-| `/library list`             | [list.md](cookbook/list.md) | 전체 카탈로그 + 설치 상태 |
-| `/library search <keyword>` | [search.md](cookbook/search.md) | 키워드로 항목 찾기 |
+| Command | Cookbook | Purpose |
+|---|---|---|
+| `/library add <details>` | [add.md](cookbook/add.md) | **Moat system catalog** `library.yaml` 에 항목 추가. Customer/company-local 등록은 `/skill-registry register-local/promote-local` 사용. |
+| `/library remove <name>` | [remove.md](cookbook/remove.md) | system catalog 에서 제거. Customer-local catalog 제거가 아님. |
+| `/library list` | [list.md](cookbook/list.md) | system catalog 조회. Current VM visibility 진단은 `/skill-registry list/doctor`. |
+| `/library search <keyword>` | [search.md](cookbook/search.md) | system catalog 검색. |
 
-### External source sync (GitHub)
+### External source sync / backup
 
-| Command                  | Cookbook | Purpose                                |
-| ------------------------ | -------- | -------------------------------------- |
-| `/library install`       | [install.md](cookbook/install.md) | 첫 device setup: fork, clone, configure |
-| `/library use <name>`    | [use.md](cookbook/use.md) | 외부 source 에서 pull (install or refresh) |
-| `/library push <name>`   | [push.md](cookbook/push.md) | 로컬 변경 → upstream GitHub 백업 |
-| `/library sync`          | [sync.md](cookbook/sync.md) | 모든 설치 항목 refresh |
+| Command | Cookbook | Purpose |
+|---|---|---|
+| `/library install` | [install.md](cookbook/install.md) | library repo 첫 설정. |
+| `/library use <name>` | [use.md](cookbook/use.md) | 외부 source 에서 pull/install/refresh. |
+| `/library push <name>` | [push.md](cookbook/push.md) | 로컬 변경 → upstream GitHub 백업. |
+| `/library sync` | [sync.md](cookbook/sync.md) | cataloged external source refresh. |
 
-### Customer-VM distribution (operator host only)
+### Legacy customer-VM distribution
 
-| Command                                  | Cookbook | Purpose                                                              |
-| ---------------------------------------- | -------- | -------------------------------------------------------------------- |
-| `/library publish <profile\|customer>`   | [publish.md](cookbook/publish.md) | managed customer VMs 으로 rsync (`deploy-profile.sh` 위임). customers 레지스트리 필요 → operator host 에서만 작동 |
+| Command | Cookbook | Purpose |
+|---|---|---|
+| `/library publish <profile\|customer>` | [publish.md](cookbook/publish.md) | **Legacy wrapper.** Canonical flow is `/skill-registry-orchestration diff <customer>` → `/skill-registry-orchestration sync <customer>`. |
 
 **Cookbook 항상 먼저** — `/library <명령>` 실행 시 해당 cookbook 파일 읽고 단계대로 진행.
 
-## Lifecycle Handoff (`/skill-architect` 와의 경계)
+## Role Handoff
 
 ```mermaid
 flowchart LR
-  AU["/skill-architect create<br/>(authoring)"] -->|"디스크에 SKILL.md"| AD["/library add<br/>(카탈로그 등재)"]
-  AD --> Q{"operator<br/>host?"}
-  Q -->|"yes"| PB["/library publish managed<br/>(customer VMs 으로)"]
-  Q -->|"no"| END["end<br/>(자기 VM 안에서만)"]
-  PB --> END
-
-  REF["/skill-architect refine<br/>(사용 후 개선)"] -.->|"version bump"| AD
+  SA["/skill-architect<br/>저작·검증·정제"] --> SR["/skill-registry<br/>현재 VM 등록·가시성"]
+  SR --> SRO["/skill-registry-orchestration<br/>고객 VM diff/sync"]
+  SRO -.-> DP["deploy-profile.sh<br/>legacy transport"]
+  LIB["/library<br/>system catalog·backup"] -.-> DP
+  FL["/fleet<br/>Tower 코드 배포·VM 운영"] -.-> SRO
 ```
-
-`/skill-architect` 가 만든 좋은 스킬을 카탈로그·배포로 가져오는 마지막 마일을 책임짐.
 
 ## Host context
 
-- **Operator host (full 프로필, 본 서버)**: 모든 명령. customers 레지스트리 + publish 가능.
-- **Managed customer VM**: catalog 관리 + external source pull/push 가능. **`publish` 비활성** (customers 정보 없음 — scoped library.yaml).
-- **Standalone customer VM**: managed 와 동일.
+- **Operator host (full 프로필, 본 서버)**: `/library` 사용 가능. 단, customer VM sync 는 `/skill-registry-orchestration` 을 우선한다.
+- **Managed/standalone customer VM**: `/library` 는 기본 배포 대상이 아니다. customer/company skill 등록은 `/skill-registry` + `local-library.yaml` 로 처리한다.
 
 자세한 customer-custom 보존 정책 + naming 권고: [cookbook/publish.md](cookbook/publish.md).
 

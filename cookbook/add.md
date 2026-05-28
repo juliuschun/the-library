@@ -1,7 +1,9 @@
-# Add a New Entry to the Library
+# Add a New Entry to the Moat System Library
 
 ## Context
-Register a new skill, agent, or prompt in the library catalog.
+Register a new skill, agent, or prompt in the **Moat system** `library.yaml` catalog.
+
+This is not the customer/company-local registration path. If the user wants a skill to become visible on the current VM or customer VM, use `/skill-registry register-local` or `/skill-registry promote-local` instead. If the user wants to create or refine the skill body, use `/skill-architect` first.
 
 ## Input
 The user provides: name, description, source, and optionally type and dependencies.
@@ -94,4 +96,4 @@ git push
 ```
 
 ### 7. Confirm
-Tell the user the entry has been added and is now available for others to use via `/library use <name>`.
+Tell the user the entry has been added to the Moat system catalog. If they want current-VM visibility, route to `/skill-registry doctor <name>` / enablement checks. If they want customer VM rollout, route to `/skill-registry-orchestration diff <customer>` before any sync.

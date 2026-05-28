@@ -23,9 +23,8 @@ profiles:
     - docs
     - browser
     - presentation
-    - meta            # skill-architect — customer 운영자도 스킬 작성·검증
-    - tower-ops       # library — customer 운영자도 자기 VM 카탈로그 운영
-    # 결정: workspace/decisions/2026-05-19-managed-profile-skill-lifecycle-tools.md
+    - meta
+    - tower-ops
   full:
     description: Moat AI 내부 — 전체 스킬
     tags:
@@ -38,22 +37,15 @@ profiles:
     - meta
     - tower-ops
     - internal
-
-# ─── Owners — 스킬·VM 의 소유 조직 (Phase B 옵션 B, 2026-05-05) ───
-# 스킬 자산의 소유권을 명시. 미래 multi-tenant skill repository 의 토대.
-# 결정: workspace/decisions/2026-05-02-skill-ui-role-split.md (갱신 #2)
-#
-# 현재는 메타데이터만 — 실제 배포 정책 (shareable, owner-aware deploy) 은 후속 결정.
 owners:
   moat:
-    display_name: "Moat AI"
-    role: provider                # Tower 제공자 (자기 자신)
-    description: "Tower 운영팀, 본 서버 (enterpriseai) 운영"
+    display_name: Moat AI
+    role: provider
+    description: Tower 운영팀, 본 서버 (enterpriseai) 운영
   okusystem:
-    display_name: "오케이유시스템"
-    role: tenant                  # Tower 도입 회사
-    description: "첫 managed 고객사"
-
+    display_name: 오케이유시스템
+    role: tenant
+    description: 첫 managed 고객사
 customers:
   tower-prod:
     owner: moat
@@ -64,30 +56,29 @@ customers:
     skills_dir: ~/.claude/skills/
     current_version: 1.0.0
     version_last_checked: '2026-04-22T06:29:28Z'
-    # 형제 sandbox VM (D12, 2026-05-02 의무화).
-    # workspace/decisions/2026-05-02-execution-sandbox-d12-sibling-sandbox-mandatory.md
     sibling_execution:
       vm_name: execution-tower-vm
       resource_group: tower_execution
       public_ip: 20.194.63.1
       private_ip: 10.0.0.4
-      ssh_alias: exec-tower      # ~/.ssh/config 에 정의된 alias
+      ssh_alias: exec-tower
       ssh_user: toweradmin
       size: Standard_B1ms
       created_at: '2026-04-26'
-      status: running             # 운영 중 ✅
+      status: running
   okusystem:
     owner: okusystem
     profile: managed
     ssh: toweradmin@20.41.101.188
     domain: okusystem.moatai.app
+    issue_repo: juliuschun/tower
     team_name: 오케이유시스템
     skills_dir: ~/.claude/skills/
     current_version: 1.0.0
     version_last_checked: '2026-04-22T06:29:28Z'
-    secrets:           # Names only — values live in customer VM's ~/claude-desk/.env
-    - OPENAI_API_KEY # gpt-image-2, ppt-gen default provider
-    - GEMINI_API_KEY # legacy ppt-gen + image edit fallback
+    secrets:
+    - OPENAI_API_KEY
+    - GEMINI_API_KEY
     azure:
       resource_group: tower_customers
       vm_name: okusystem
@@ -95,32 +86,36 @@ customers:
       backup_policy: DefaultPolicy
       backup_enrolled: true
       backup_layer1_cron: true
-    # 형제 sandbox VM (D12) — 2026-05-04 신설 ✅
     sibling_execution:
       vm_name: execution-okusystem-vm
       resource_group: tower_execution
       public_ip: 20.196.213.144
       private_ip: 10.0.0.6
-      ssh_alias: exec-okusystem  # okusystem 본체의 ~/.ssh/config 에 등록됨
+      ssh_alias: exec-okusystem
       ssh_user: toweradmin
       size: Standard_B1ms
       created_at: '2026-05-04'
       status: running
-      nsg_source_ip: 20.41.101.188/32   # okusystem 본체 IP 만 허용
-      note: |-
-        okusystem 본체 .env 에 ENABLE_SANDBOX=true + EXECUTION_VM_HOST=exec-okusystem
+      nsg_source_ip: 20.41.101.188/32
+      note: 'okusystem 본체 .env 에 ENABLE_SANDBOX=true + EXECUTION_VM_HOST=exec-okusystem
+
         활성화됨. [sandbox] enabled 로그 검증됨. 단 코드 gate (claude-engine.ts 의
-        towerRole === 'full' 조건) 가 아직 managed 차단 — Phase 2a 의 작업 잔여.
-        활성 후엔 AI가 도구 mount 받음.
+
+        towerRole === ''full'' 조건) 가 아직 managed 차단 — Phase 2a 의 작업 잔여.
+
+        활성 후엔 AI가 도구 mount 받음.'
   demo-tower:
     owner: moat
     profile: managed
     ssh: toweradmin@20.200.217.16
     domain: demo-tower.moatai.app
+    issue_repo: juliuschun/tower
     team_name: Demo
     skills_dir: ~/.claude/skills/
     current_version: 1.0.0
     version_last_checked: '2026-04-22T06:29:28Z'
+    tags:
+    - staging
     secrets:
     - OPENAI_API_KEY
     - GEMINI_API_KEY
@@ -131,20 +126,19 @@ customers:
       backup_policy: DefaultPolicy
       backup_enrolled: true
       backup_layer1_cron: false
-    # 형제 sandbox VM (D12) — 이미 신설됨 ✅
     sibling_execution:
       vm_name: execution-demo-tower-vm
       resource_group: tower_execution
       public_ip: 20.200.220.217
       private_ip: 10.0.0.5
-      ssh_alias: null               # demo-tower 본체에 alias 추가 필요
+      ssh_alias: null
       ssh_user: toweradmin
       size: Standard_B1ms
-      created_at: '2026-04-30 (auto-detected, manual creation date approximate)'
+      created_at: 2026-04-30 (auto-detected, manual creation date approximate)
       status: running
-      note: |-
-        demo-tower 의 .env 에 EXECUTION_VM_HOST 활성 + ssh config 추가 작업 필요.
-        Q15 (fleet sandbox 통합) 완성 시 자동화 예정.
+      note: 'demo-tower 의 .env 에 EXECUTION_VM_HOST 활성 + ssh config 추가 작업 필요.
+
+        Q15 (fleet sandbox 통합) 완성 시 자동화 예정.'
 library:
   skills:
   - name: ideate
@@ -168,6 +162,16 @@ library:
     description: 예전 대화 찾기 — 과거 세션/대화 전문 검색
     tags:
     - core
+    risk:
+      level: low
+      can_send_external: false
+      can_modify_files: false
+      can_deploy: false
+      uses_secrets: false
+    data_policy:
+      handles_customer_data: true
+      stores_outputs: false
+      external_api: false
   - name: memory
     owner: moat
     tier: team
@@ -182,6 +186,24 @@ library:
     description: 세션 시작시 컨텍스트 복구
     tags:
     - core
+  - name: issue
+    owner: moat
+    tier: team
+    version: 1.0.0
+    description: GitHub Issue 자동 등록 — 세션 컨텍스트 (VM·session ID·프로젝트·역할) 자동 채움 + 컨펌 후 gh issue create. 기본 repo juliuschun/tower
+      (PRIVATE) + secret-pattern 가드 + 라벨 자동 부여 (vm:/role:/from:tower-skill). PM 탭 폐기 이후 캡처 inbox 의 단일 채널.
+    tags:
+    - core
+    risk:
+      level: medium
+      can_send_external: true
+      can_modify_files: false
+      can_deploy: false
+      uses_secrets: false
+    data_policy:
+      handles_customer_data: true
+      stores_outputs: false
+      external_api: true
   - name: plan-refine
     owner: moat
     tier: team
@@ -277,10 +299,19 @@ library:
     owner: moat
     tier: team
     version: 1.0.0
-    description: Google Workspace CLI — Calendar, Drive, Sheets, Docs, Tasks, Gmail
-      통합
+    description: Google Workspace CLI — Calendar, Drive, Sheets, Docs, Tasks, Gmail 통합
     tags:
     - business
+    risk:
+      level: medium
+      can_send_external: true
+      can_modify_files: false
+      can_deploy: false
+      uses_secrets: true
+    data_policy:
+      handles_customer_data: true
+      stores_outputs: false
+      external_api: true
   - name: text2sql
     owner: moat
     tier: team
@@ -288,11 +319,34 @@ library:
     description: 한국어 자연어 → SQL 변환 + DB 직접 실행
     tags:
     - business
-  - name: kanban
+    visibility: hidden
+    lifecycle: beta
+    risk:
+      level: medium
+      can_send_external: false
+      can_modify_files: false
+      can_deploy: false
+      uses_secrets: true
+    data_policy:
+      handles_customer_data: true
+      stores_outputs: false
+      external_api: false
+    review:
+      reviewed_by: julius
+      reviewed_at: 2026-05-20
+      notes: 결정 §4 — OKU 시나리오 확정 전까지 데모성. promote 전 시나리오 합의 필요.
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
+  - name: task-schedule
     owner: moat
     tier: team
-    version: 1.0.0
-    description: 태스크 관리 — 칸반 보드에 할 일 추가, 상태 변경, 목록 조회
+    version: 2.0.0
+    description: Tower 태스크·스케쥴 통합 — 태스크 생성/조회/수정 + 예약/반복 실행 관리
     tags:
     - business
   - name: mermaid-pdf
@@ -341,8 +395,8 @@ library:
     owner: moat
     tier: team
     version: 1.0.0
-    description: SOUL.md 정체성 인터뷰 — 누구·왜·가치·경계 5질문 채움. brownfield 안전 (기존 progress·decisions·memory
-      흡수 후 사용자 컨펌만 기록). /soul, /soul fill, /soul consolidate, /soul check.
+    description: SOUL.md 정체성 인터뷰 — 누구·왜·가치·경계 5질문 채움. brownfield 안전 (기존 progress·decisions·memory 흡수 후 사용자 컨펌만 기록). /soul,
+      /soul fill, /soul consolidate, /soul check.
     source: ~/.claude/skills/soul/SKILL.md
     tags:
     - docs
@@ -364,9 +418,20 @@ library:
     owner: moat
     tier: team
     version: 1.2.0
-    description: AI 이미지·슬라이드 생성 — OpenAI gpt-image-2 (한국어 텍스트 fidelity 96-100%). 단일 이미지 (포스터·인포그래픽·캠페인·SNS·hero·블로그 썸네일) 부터 슬라이드 묶음 (PPT·발표자료·제안서) 까지 한 스킬로. 3 modes — AI 이미지·Marp·HTML.
+    description: AI 이미지·슬라이드 생성 — OpenAI gpt-image-2 (한국어 텍스트 fidelity 96-100%). 단일 이미지 (포스터·인포그래픽·캠페인·SNS·hero·블로그 썸네일) 부터
+      슬라이드 묶음 (PPT·발표자료·제안서) 까지 한 스킬로. 3 modes — AI 이미지·Marp·HTML.
     tags:
     - presentation
+    risk:
+      level: low
+      can_send_external: false
+      can_modify_files: true
+      can_deploy: false
+      uses_secrets: true
+    data_policy:
+      handles_customer_data: false
+      stores_outputs: true
+      external_api: true
   - name: pptx-edit
     owner: moat
     tier: team
@@ -400,9 +465,10 @@ library:
     owner: moat
     tier: team
     version: 1.0.0
-    description: 실시간 원격 브라우저 — 채팅 임베드/팝업 (Neko WebRTC)
+    description: 실시간 원격 브라우저 — 채팅 임베드/팝업 (Neko WebRTC). Deprecated 2026-05-25 — Neko runtime removed; keep only for historical/manual
+      recovery.
     tags:
-    - browser
+    - deprecated-neko
     requires:
     - docker
     - neko
@@ -463,39 +529,175 @@ library:
     tags:
     - dev
   - name: impeccable
-    owner: external                # Apache 2.0, pbakaus/impeccable v3.0.7 (frontend-design 진화형)
-    tier: trial                    # 1~2주 dogfood 후 우리 frontend-design 에 흡수 → 제거 예정
+    owner: external
+    tier: trial
     version: 3.0.7
-    description: 디자인 슈퍼셋 trial — 7개 reference (typography·color·motion·spatial·interaction·responsive·ux-writing)
-      + 23 sub-command (`/impeccable craft|shape|critique|audit|polish|harden|...`) + 27 결정론적 anti-pattern.
-      ⚠️ trial only — `/impeccable pin` 금지, customer VM 배포 금지. 흡수 트랙 → workspace/decisions/2026-05-12-impeccable-trial.md
+    description: 디자인 슈퍼셋 trial — 7개 reference (typography·color·motion·spatial·interaction·responsive·ux-writing) + 23 sub-command
+      (`/impeccable craft|shape|critique|audit|polish|harden|...`) + 27 결정론적 anti-pattern. ⚠️ trial only — `/impeccable pin`
+      금지, customer VM 배포 금지. 흡수 트랙 → workspace/decisions/2026-05-12-impeccable-trial.md
     tags:
-    - internal                     # standalone/managed 자동 제외 → 우리 admin 한정
+    - internal
   - name: fleet
     owner: moat
     tier: tower-admin
     version: 1.1.0
-    description: 고객 Tower VM 중앙 관리 (상태, 점검, 배포, 원격 세션, 마이그레이션 자동 적용 + 육안 검증
-      7항목, working tree 가드 완화)
+    description: 고객 Tower VM 중앙 관리 (상태, 점검, 배포, 원격 세션, 마이그레이션 자동 적용 + 육안 검증 7항목, working tree 가드 완화)
     source: ~/.claude/skills/fleet/SKILL.md
     tags:
     - tower-ops
+    risk:
+      level: high
+      can_send_external: true
+      can_modify_files: true
+      can_deploy: true
+      uses_secrets: true
+    data_policy:
+      handles_customer_data: false
+      stores_outputs: true
+      external_api: false
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
   - name: deploy
     owner: moat
     tier: tower-admin
     version: 1.0.0
-    description: 사이트/앱 배포 — 만든 코드를 Cloudflare Pages(정적) 또는 Azure Container Apps(동적)에
-      배포
+    description: 사이트/앱 배포 — 만든 코드를 Cloudflare Pages(정적) 또는 Azure Container Apps(동적)에 배포
     tags:
     - tower-ops
+    risk:
+      level: high
+      can_send_external: true
+      can_modify_files: false
+      can_deploy: true
+      uses_secrets: true
+    data_policy:
+      handles_customer_data: false
+      stores_outputs: false
+      external_api: true
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
   - name: skill-architect
     owner: moat
     tier: tower-admin
     version: 1.0.0
-    description: 스킬 라이프사이클 — 만들기·검증·감사·정제·개선 (5-phase create + 4-phase refine). authoring
-      entry point. 카탈로그 등재·배포는 /library.
+    description: 스킬 라이프사이클 — 만들기·검증·감사·정제·개선 (5-phase create + 4-phase refine). authoring entry point. 카탈로그 등재·배포는 /library.
     tags:
     - meta
+    visibility: default
+    risk:
+      level: medium
+      can_send_external: false
+      can_modify_files: true
+      can_deploy: false
+      uses_secrets: false
+    distribution:
+      audience: customer-admin
+      profiles:
+      - managed
+      - full
+      customer_safe: true
+  - name: decisions-distill
+    owner: moat
+    tier: tower-admin
+    version: 0.1.0
+    description: 결정문서 INDEX 갱신 — workspace/decisions/INDEX.md 를 재빌드하고 미분류 결정을 보고
+    tags:
+    - meta
+    - docs
+    visibility: default
+    runtime_requirements:
+      execution: required
+      persistence: none
+      network: none
+      secrets: []
+      packages: []
+    portability:
+      level: environment-bound
+      warnings:
+      - Depends on the current environment's decisions directory and index build script.
+    risk:
+      level: medium
+      can_send_external: false
+      can_modify_files: true
+      can_deploy: false
+      uses_secrets: false
+    distribution:
+      audience: customer-admin
+      profiles:
+      - managed
+      - full
+      customer_safe: true
+  - name: skill-registry-orchestration
+    owner: moat
+    tier: tower-admin
+    version: 0.1.0
+    description: 고객 VM 스킬 장부 오케스트레이션 — fleet-wide registry doctor, unregistered folder, portability drift 진단
+    tags:
+    - meta
+    - tower-ops
+    visibility: default
+    runtime_requirements:
+      execution: required
+      persistence: none
+      network: optional
+      secrets: []
+      packages: []
+    portability:
+      level: tower-ops-only
+      warnings: []
+    risk:
+      level: high
+      can_send_external: false
+      can_modify_files: false
+      can_deploy: false
+      uses_secrets: false
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
+  - name: skill-registry
+    owner: moat
+    tier: tower-admin
+    version: 0.1.0
+    description: 현재 VM 스킬 장부 진단 — registered/visible/enabled 와 runtime capability 실패를 분리하고 portability WARN 을 표시
+    tags:
+    - meta
+    - tower-ops
+    visibility: default
+    runtime_requirements:
+      execution: optional
+      persistence: none
+      network: none
+      secrets: []
+      packages: []
+    portability:
+      level: tower-ops-only
+      warnings: []
+    risk:
+      level: medium
+      can_send_external: false
+      can_modify_files: true
+      can_deploy: false
+      uses_secrets: false
+    distribution:
+      audience: customer-admin
+      profiles:
+      - managed
+      - full
+      customer_safe: true
   - name: tower-upgrade
     owner: moat
     tier: tower-admin
@@ -503,33 +705,58 @@ library:
     description: Tower 템플릿 업그레이드 — workspace에서 검증된 개선사항을 Tower 기본 템플릿에 반영
     tags:
     - tower-ops
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
   - name: library
     owner: moat
     tier: tower-admin
     version: 1.0.0
-    description: 스킬 카탈로그 + 배포 — library.yaml 등록·외부 source pull·고객 VM publish (operator
-      host 만). authoring 은 /skill-architect.
+    description: Moat system catalog + legacy wrapper — library.yaml 관리·외부 source backup. Authoring=/skill-architect, current VM registry=/skill-registry, customer VM sync=/skill-registry-orchestration.
     tags:
     - tower-ops
+    risk:
+      level: medium
+      can_send_external: true
+      can_modify_files: true
+      can_deploy: true
+      uses_secrets: false
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
   - name: customer-voice
     owner: moat
     tier: tower-admin
     version: 0.1.0
-    description: 고객 VM 대화 청취 — 고객 user 입력을 읽고 제품·운영·프롬프팅 개선 및 tower 채널 공지 초안으로 전환 (admin-only,
-      자동 전송 금지)
+    description: 고객 VM 대화 청취 — 고객 user 입력을 읽고 제품·운영·프롬프팅 개선 및 tower 채널 공지 초안으로 전환 (admin-only, 자동 전송 금지)
     source: ~/.claude/skills/customer-voice/SKILL.md
     tags:
     - internal
     risk:
       level: high
-      can_send_external: true       # 운영자 승인 후 #tower 채널 webhook push 가능
+      can_send_external: true
       can_modify_files: false
       can_deploy: false
-      uses_secrets: true            # customer VM SSH / room webhook token
+      uses_secrets: true
     data_policy:
-      handles_customer_data: true   # 고객 VM user 메시지
-      stores_outputs: true          # 내부 청취 노트·개선 액션 문서
+      handles_customer_data: true
+      stores_outputs: true
       external_api: false
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
   - name: tower-guide
     owner: moat
     tier: team
@@ -541,11 +768,10 @@ library:
     owner: moat
     tier: team
     version: 1.1.0
-    description: Tower 에 대해 *궁금한 거 무엇이든* 풀어주는 안내·Q&A 스킬. 입문부터 깊은 질문 ("권한 어떻게 격리돼?",
-      "Sandbox 랑 본체 뭐가 달라?", "내가 X 할 수 있어?", "이거 어떻게 동작해?", "왜 이렇게 만들어졌어?") 까지. 핸드북
-      (`~/.claude/skills/upgrade-handbook/handbook.md`) 백엔드. 4 모드 (default 질문 즉답 또는 짧은 맞춤
-      소개 / tour 5-7 단계 / <topic> 토픽 즉답 / cheatsheet 한 페이지). 사용자 역할·현재 프로젝트에 맞춰 자동
-      분기. 모든 Tower 사용자 대상 — customer VM 까지 배포.
+    description: Tower 에 대해 *궁금한 거 무엇이든* 풀어주는 안내·Q&A 스킬. 입문부터 깊은 질문 ("권한 어떻게 격리돼?", "Sandbox 랑 본체 뭐가 달라?", "내가 X 할 수 있어?",
+      "이거 어떻게 동작해?", "왜 이렇게 만들어졌어?") 까지. 핸드북 (`~/.claude/skills/upgrade-handbook/handbook.md`) 백엔드. 4 모드 (default 질문 즉답 또는
+      짧은 맞춤 소개 / tour 5-7 단계 / <topic> 토픽 즉답 / cheatsheet 한 페이지). 사용자 역할·현재 프로젝트에 맞춰 자동 분기. 모든 Tower 사용자 대상 — customer VM
+      까지 배포.
     tags:
     - core
   - name: tower-guide-update
@@ -555,14 +781,38 @@ library:
     description: Tower 위키 자동 갱신 — git diff → docs/tower-guide/ 업데이트
     tags:
     - tower-ops
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
   - name: selfheal
     owner: moat
     tier: tower-admin
     version: 1.0.0
-    description: 시스템 자가 진단 + 회고 + 개선 — '서버 상태', '뭐가 잘못됐나', '개선할 거 없나', '좀비 정리', '헬스체크',
-      '회고'
+    description: 시스템 자가 진단 + 회고 + 개선 — '서버 상태', '뭐가 잘못됐나', '개선할 거 없나', '좀비 정리', '헬스체크', '회고'
     tags:
     - tower-ops
+    visibility: hidden
+    risk:
+      level: high
+      can_send_external: false
+      can_modify_files: true
+      can_deploy: true
+      uses_secrets: false
+    review:
+      reviewed_by: julius
+      reviewed_at: 2026-05-20
+      notes: OKU 1차 감사 — 일반 사용자 default 부적합 (2026-05-20 결정 §4).
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
   - name: codex
     owner: moat
     tier: tower-admin
@@ -570,6 +820,13 @@ library:
     description: Codex 실행 — OpenAI Codex CLI로 코드 생성/분석 태스크 실행
     tags:
     - internal
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
   - name: gemini
     owner: moat
     tier: tower-admin
@@ -577,6 +834,13 @@ library:
     description: Gemini 실행 — Google Gemini CLI로 멀티모달 분석/생성 태스크 실행
     tags:
     - internal
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
   - name: claude-agent-sdk
     owner: moat
     tier: tower-admin
@@ -595,55 +859,56 @@ library:
     owner: moat
     tier: tower-admin
     version: 1.0.0
-    description: Work-in-progress dashboard — 활성 세션 × 만진 파일 × git sync 상태를 한 화면(datatable +
-      mermaid)으로. tower repo 한정, 본인 24h 활성 세션. 조회 only. /wip, "지금 뭐 작업 중", "미푸시 정리",
-      "동시 세션".
+    description: Work-in-progress dashboard — 활성 세션 × 만진 파일 × git sync 상태를 한 화면(datatable + mermaid)으로. tower repo 한정, 본인
+      24h 활성 세션. 조회 only. /wip, "지금 뭐 작업 중", "미푸시 정리", "동시 세션".
     source: ~/.claude/skills/wip/SKILL.md
     tags:
     - tower-ops
-  # ─── Moat 팀 전용 (internal 카테고리 — standalone/managed 자동 제외) ───
-  # 옵션 B 의 owner 모델로 'moat' 명시. 후속 결정에서 owner-aware 매칭으로 정리 예정.
+    access:
+    - user:admin
+    distribution:
+      audience: operator
+      profiles:
+      - full
+      customer_safe: false
   - name: commit-session
     owner: moat
     tier: team
     version: 1.0.0
-    description: 멀티 세션 환경에서 자기 세션이 만진 파일만 자동 git add → commit. PostToolUse hook 의 provenance.jsonl
-      을 $TOWER_SESSION_ID 로 grep. Moat 팀 본 서버의 멀티 세션 작업 흐름 도구.
+    description: 멀티 세션 환경에서 자기 세션이 만진 파일만 자동 git add → commit. PostToolUse hook 의 provenance.jsonl 을 $TOWER_SESSION_ID 로 grep.
+      Moat 팀 본 서버의 멀티 세션 작업 흐름 도구.
     tags:
     - internal
   - name: offer-A4-html
     owner: moat
     tier: team
     version: 1.0.0
-    description: A4 인쇄·PDF 친화 HTML 제안서·견적서·보고서 생성. Pretendard 한국어 폰트 + 네이비/오렌지 디자인
-      시스템 + Chromium headless PDF + Tower publish (unlisted). 베이AI/한투 영업 노하우. ⚠️ Moat 팀 영업
-      자산 — 고객사 배포 금지.
+    description: A4 인쇄·PDF 친화 HTML 제안서·견적서·보고서 생성. Pretendard 한국어 폰트 + 네이비/오렌지 디자인 시스템 + Chromium headless PDF + Tower publish
+      (unlisted). 베이AI/한투 영업 노하우. ⚠️ Moat 팀 영업 자산 — 고객사 배포 금지.
     tags:
     - internal
   - name: tower-offer
     owner: moat
     tier: team
     version: 1.0.0
-    description: Tower 도입 제안 · 견적 편지 생성 파이프라인. 신규 고객사 영업 시 담백한 편지 톤 + 구체 견적 + 가치 내장 프레이밍
-      초안. ⚠️ Moat 팀 영업 자산 — 고객사 배포 금지.
+    description: Tower 도입 제안 · 견적 편지 생성 파이프라인. 신규 고객사 영업 시 담백한 편지 톤 + 구체 견적 + 가치 내장 프레이밍 초안. ⚠️ Moat 팀 영업 자산 — 고객사 배포 금지.
     tags:
     - internal
   - name: pm-capture
     owner: moat
     tier: team
     version: 1.0.0
-    description: ⚠️ DEPRECATED 2026-05-09 — workspace/decisions/2026-05-09-pm-tabs-and-pm-capture-deprecation.md.
-      "기억해/track/나중에/TODO" 류는 (1) 사소하면 무시 (2) 의미 있으면 결정문서 직접 작성 권유. 본 스킬 호출 금지.
+    description: ⚠️ DEPRECATED 2026-05-09 — workspace/decisions/2026-05-09-pm-tabs-and-pm-capture-deprecation.md. "기억해/track/나중에/TODO"
+      류는 (1) 사소하면 무시 (2) 의미 있으면 결정문서 직접 작성 권유. 본 스킬 호출 금지.
     tags:
     - internal
   - name: upgrade-tower-intro
     owner: moat
     tier: team
     version: 1.1.0
-    description: '/tower-intro 의 데이터·정의를 유지보수·업그레이드하는 운영자 메타-스킬. tower-intro 가 사용자 질문에
-      답할 때 참조하는 핸드북 정본 (옆 폴더 handbook.md) 의 신선도 진단·갱신·섹션 인용·발표 자료 톤별 초안 추출 4 모드.
-      핸드북이 합성물이라 원본 (결정문서/위키/카탈로그/시드) 변경 시 자동 stale 감지. 사용자 인터랙티브 안내는 `/tower-intro`
-      사용. ⚠️ Moat 팀 운영 자산 — customer VM 배포 금지.'
+    description: /tower-intro 의 데이터·정의를 유지보수·업그레이드하는 운영자 메타-스킬. tower-intro 가 사용자 질문에 답할 때 참조하는 핸드북 정본 (옆 폴더 handbook.md)
+      의 신선도 진단·갱신·섹션 인용·발표 자료 톤별 초안 추출 4 모드. 핸드북이 합성물이라 원본 (결정문서/위키/카탈로그/시드) 변경 시 자동 stale 감지. 사용자 인터랙티브 안내는 `/tower-intro`
+      사용. ⚠️ Moat 팀 운영 자산 — customer VM 배포 금지.
     tags:
     - internal
   agents: []

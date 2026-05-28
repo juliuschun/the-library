@@ -1,6 +1,13 @@
-# /library publish — managed customer VMs 으로 스킬 배포
+# /library publish — legacy wrapper for managed customer VM skill sync
 
-본 서버의 `~/.claude/skills/<name>/` + `library.yaml` 을 ssh + rsync 로 customer VMs 에 전파한다. 내부적으로 `deploy-profile.sh` 를 호출.
+`/library publish` is legacy muscle memory. The canonical operator flow is now:
+
+```bash
+/skill-registry-orchestration diff <customer>
+/skill-registry-orchestration sync <customer>
+```
+
+This cookbook remains only because `deploy-profile.sh` still physically lives under the library skill directory. It forwards the operator to the same ssh + rsync transport for `~/.claude/skills/<name>/` + scoped `library.yaml`.
 
 ## Host context — operator host only
 
@@ -25,9 +32,11 @@
 
 ## When this runs
 
-- `/skill-architect create` 흐름의 마지막 단계로 사용자가 "managed VM 에 배포" 선택했을 때
-- `/library publish <profile>` 또는 `/library publish <customer>` 명시 호출
-- 자연어 트리거: "고객 VM 에 스킬 배포", "okusystem 에 새 스킬 보내기", "publish skill"
+Prefer **not** to run this cookbook directly. For new flows:
+
+- 사용자 요청이 "고객 VM 에 스킬 배포", "okusystem 에 새 스킬 보내기", "publish skill" 이면 → `/skill-registry-orchestration diff/sync` 로 넘긴다.
+- 사용자가 명시적으로 legacy `/library publish <profile|customer>` 를 호출했을 때만 이 cookbook을 실행한다.
+- `/skill-architect create` 후 고객 VM 전파가 필요하면 → `/skill-registry-orchestration diff <customer>` → 사용자 확인 → `sync <customer>`.
 
 ## Arguments
 
@@ -40,14 +49,15 @@
 - **`<profile>`**: `standalone | managed | full`
 - **`<customer>`**: `library.yaml` 의 `customers:` 키 (e.g. `okusystem`, `demo-tower`)
 
-## Boundary with /fleet deploy
+## Boundary with `/skill-registry-orchestration` and `/fleet deploy`
 
 | 명령 | 범위 | 언제 |
 |---|---|---|
-| `/library publish` | 스킬 + scoped library.yaml + manifest **만** | 새 스킬 추가 / 기존 스킬 업데이트 후 |
+| `/skill-registry-orchestration diff/sync` | 스킬 + scoped library.yaml + manifest **만** | 새 스킬 추가 / 기존 스킬 업데이트 후 canonical path |
+| `/library publish` | 위 sync의 legacy wrapper | 오래된 호출 호환이 필요할 때만 |
 | `/fleet deploy <customer>` | Tower 코드 (git pull + build + pm2 restart) **+** 스킬 + workspace guide | Tower 자체 업데이트 또는 종합 배포 |
 
-둘 다 내부적으로 `deploy-profile.sh` 를 호출하되 `/fleet deploy` 가 더 큰 단위. 새 스킬 한두 개 추가 후 빠르게 전파만 원하면 `/library publish`.
+`deploy-profile.sh` 는 아직 library 폴더에 있지만 workflow owner는 `/skill-registry-orchestration` 이다.
 
 ## Steps
 
