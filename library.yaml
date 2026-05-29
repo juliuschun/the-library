@@ -601,7 +601,6 @@ library:
       can_deploy: false
       uses_secrets: false
     distribution:
-      audience: customer-admin
       profiles:
       - managed
       - full
@@ -632,7 +631,6 @@ library:
       can_deploy: false
       uses_secrets: false
     distribution:
-      audience: customer-admin
       profiles:
       - managed
       - full
@@ -693,7 +691,6 @@ library:
       can_deploy: false
       uses_secrets: false
     distribution:
-      audience: customer-admin
       profiles:
       - managed
       - full
